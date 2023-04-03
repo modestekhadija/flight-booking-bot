@@ -12,7 +12,7 @@ from .date_resolver_dialog import DateResolverDialog, ReturnDateResolverDialog
 from helpers.luis_helper import LuisHelper, Intent
 from config import DefaultConfig
 import logging
-from opencensus.ext.azure import AzureLogHandler
+from opencensus.ext.azure.log_exporter import AzureLogHandler
 
 CONFIG = DefaultConfig()
 
