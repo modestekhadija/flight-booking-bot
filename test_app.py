@@ -37,6 +37,7 @@ class TestApp(unittest.TestCase):
 
     def test_flight_budget(self):
         self.assertEqual(BookingDetails(budget=500).budget, 500)
+# TOO : add more tests
 
 
 
