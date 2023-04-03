@@ -210,9 +210,11 @@ class BookingDialog(CancelAndHelpDialog):
         print(properties)
         # self.telemetry_client.track_trace("User didn't confirm the bot response", properties=properties, severity=2)
         # self.telemetry_client.flush()
-        self.logger.warning("User didn't confirm the bot response", extra=properties)
+        self.logger.setLevel(logging.ERROR)
+        self.logger.error("User didn't confirm the bot response", extra=properties)
 
         return await step_context.end_dialog()
+
 
 
     def is_ambiguous(self, timex: str) -> bool:
