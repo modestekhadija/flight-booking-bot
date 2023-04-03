@@ -10,6 +10,13 @@ from botbuilder.core import MessageFactory, BotTelemetryClient, NullTelemetryCli
 from .cancel_and_help_dialog import CancelAndHelpDialog
 from .date_resolver_dialog import DateResolverDialog, ReturnDateResolverDialog
 from helpers.luis_helper import LuisHelper, Intent
+from config import DefaultConfig
+import logging
+from opencensus.ext.azure import AzureLogHandler
+
+CONFIG = DefaultConfig()
+
+CONNEXION_STRING = CONFIG.APPLICATIONINSIGHTS_CONNECTION_STRING
 
 class BookingDialog(CancelAndHelpDialog):
     """Flight booking implementation."""
@@ -23,6 +30,8 @@ class BookingDialog(CancelAndHelpDialog):
             dialog_id or BookingDialog.__name__, telemetry_client
         )
         self.telemetry_client = telemetry_client
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(AzureLogHandler(connection_string=CONNEXION_STRING))
         text_prompt = TextPrompt(TextPrompt.__name__)
         text_prompt.telemetry_client = telemetry_client
 
@@ -199,8 +208,9 @@ class BookingDialog(CancelAndHelpDialog):
         properties["budget"] = step_context.options.budget
         properties = {'custom_dimensions': step_context.options.__dict__}
         print(properties)
-        self.telemetry_client.track_trace("User didn't confirm the bot response", properties=properties, severity=2)
-        self.telemetry_client.flush()
+        # self.telemetry_client.track_trace("User didn't confirm the bot response", properties=properties, severity=2)
+        # self.telemetry_client.flush()
+        self.logger.warning("User didn't confirm the bot response", extra=properties)
 
 
     def is_ambiguous(self, timex: str) -> bool:
