@@ -9,7 +9,6 @@ from botbuilder.dialogs.prompts import ConfirmPrompt, TextPrompt, PromptOptions
 from botbuilder.core import MessageFactory, BotTelemetryClient, NullTelemetryClient
 from .cancel_and_help_dialog import CancelAndHelpDialog
 from .date_resolver_dialog import DateResolverDialog, ReturnDateResolverDialog
-from helpers.luis_helper import LuisHelper, Intent
 from config import DefaultConfig
 import logging
 from opencensus.ext.azure.log_exporter import AzureLogHandler
@@ -65,8 +64,6 @@ class BookingDialog(CancelAndHelpDialog):
     async def destination_step(self, step_context: WaterfallStepContext) -> DialogTurnResult:
         """Prompt for destination."""
         booking_details = step_context.options
-        print("=============================booking_details.destination===========================")
-        print(booking_details.destination)
 
         if booking_details.destination is None:
             return await step_context.prompt(
@@ -85,12 +82,6 @@ class BookingDialog(CancelAndHelpDialog):
 
         # Capture the response to the previous step's prompt
         booking_details.destination = step_context.result
-
-        print("================booking_details.destination previous_step=====================")
-        print(booking_details.destination)
-
-        print("=============================booking_details.origin===========================")
-        print(booking_details.origin)
 
         if booking_details.origin is None:
             return await step_context.prompt(
@@ -111,10 +102,6 @@ class BookingDialog(CancelAndHelpDialog):
         # Capture the results of the previous step
         booking_details.origin = step_context.result
 
-        print("================booking_details.origin previous_step=====================")
-        print(booking_details.origin)
-
-        print("=============================booking_details.travel_date===========================")
         print(booking_details.travel_date)
 
         if not booking_details.travel_date or self.is_ambiguous(booking_details.travel_date):
@@ -133,12 +120,6 @@ class BookingDialog(CancelAndHelpDialog):
 
         # Capture the results of the previous step
         booking_details.travel_date = step_context.result
-
-        print("================booking_details.travel_date previous_step=====================")
-        print(booking_details.travel_date)
-
-        print("=============================booking_details.return_date===========================")
-        print(booking_details.return_date)
         
         if not booking_details.return_date or self.is_ambiguous(booking_details.return_date):
             return await step_context.begin_dialog(
@@ -156,12 +137,6 @@ class BookingDialog(CancelAndHelpDialog):
         # Capture the response to the previous step's prompt
         booking_details.return_date = step_context.result
 
-
-        print("================booking_details.return_date previous_step=====================")
-        print(booking_details.return_date)
-
-        print("=============================booking_details.budget===========================")
-        print(booking_details.budget)
 
         if booking_details.budget is None:
             return await step_context.prompt(
@@ -209,10 +184,7 @@ class BookingDialog(CancelAndHelpDialog):
         properties = {'custom_dimensions': step_context.options.__dict__}
         print(properties)
         self.telemetry_client.track_trace("Warning : User didn't confirm the bot response", properties=properties, severity=2)
-        # self.telemetry_client.track_trace("Error : User didn't confirm the bot response", properties=properties, severity=3)
         self.telemetry_client.flush()
-        # self.logger.setLevel(logging.ERROR)
-        # self.logger.error("User didn't confirm the bot response", extra=properties)
 
         return await step_context.end_dialog()
 

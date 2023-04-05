@@ -4,9 +4,51 @@ from enum import Enum
 from typing import Dict, Tuple
 from botbuilder.ai.luis import LuisRecognizer
 from botbuilder.core import IntentScore, TopIntent, TurnContext
-import pprint
-
 from booking_details import BookingDetails
+import datetime
+
+def extract_year_from_date(timex_string):
+    try:
+        year = int(timex_string.split("-")[0])
+    except ValueError:
+        year = datetime.datetime.now().year
+    return year
+
+def extract_month_from_date(timex_string):
+    try:
+        month = int(timex_string.split("-")[1])
+    except ValueError:
+        month = datetime.datetime.now().month
+    return month
+
+def extract_day_from_date(timex_string):
+    try:
+        day = int(timex_string.split("-")[2])
+    except ValueError:
+        day = datetime.datetime.now().day
+
+    return day
+
+def extract_date_from_timex(timex_string):
+    year = extract_year_from_date(timex_string)
+    print(year)
+    month = extract_month_from_date(timex_string)
+    print(month)
+    day = extract_day_from_date(timex_string)
+    print(day)
+    date_obj = datetime.datetime(year, month, day)
+    date_formatee = date_obj.strftime('%Y-%m-%d')
+
+    return date_formatee
+
+def extract_date_from_timex(timex_string):
+    year = extract_year_from_date(timex_string)
+    month = extract_month_from_date(timex_string)
+    day = extract_day_from_date(timex_string)
+    date_obj = datetime.datetime(year, month, day)
+    date_formatee = date_obj.strftime('%Y-%m-%d')
+
+    return date_formatee
 
 
 class Intent(Enum):
@@ -40,8 +82,9 @@ class LuisHelper:
 
         try:
             recognizer_result = await luis_recognizer.recognize(turn_context)
-            print('===============================recognizer_result=============================================')
+            print('\n Recognizer_result :')
             print(recognizer_result)
+            print("\n")
 
             intent = (
                 sorted(recognizer_result.intents, key=recognizer_result.intents.get, reverse=True)[:1][0]
@@ -56,13 +99,12 @@ class LuisHelper:
 
                 # Destination
                 to_entities = recognizer_result.entities.get("$instance", {}).get("dst_city", [])
-                print('===============================to_entities=============================================')
-                print(to_entities)
+                print('To_entities:', to_entities)
+                print("\n")
 
                 if len(to_entities) > 0:
-                    print('===================recognizer_result.entities.get("dst_city", [{"$instance": {}}])[0]=============================================')
-                    print(recognizer_result.entities.get("dst_city", [{"$instance": {}}])[0])
-                    print(to_entities[0]["text"].capitalize())
+                    print('Recognizer_result.entities.get("dst_city", [{"$instance": {}}])[0]:',recognizer_result.entities.get("dst_city", [{"$instance": {}}])[0])
+                    print("\n")
                     if recognizer_result.entities.get("dst_city", [{"$instance": {}}])[0]:
                         result.destination = to_entities[0]["text"].capitalize()
 
@@ -70,67 +112,69 @@ class LuisHelper:
                         result.unsupported_airports.append(to_entities[0]["text"].capitalize())
 
 
-
                 # Origin
                 from_entities = recognizer_result.entities.get("$instance", {}).get("or_city", [])
-                print('===============================from_entities=============================================')
-                print(from_entities)
+                print('From_entities :', from_entities, "\n") 
 
                 if len(from_entities) > 0:
-                    print('===================recognizer_result.entities.get("or_city", [{"$instance": {}}])[0]=============================================')
-                    print(recognizer_result.entities.get("or_city", [{"$instance": {}}])[0])
+
                     if recognizer_result.entities.get("or_city", [{"$instance": {}}])[0]:
                         result.origin = from_entities[0]["text"].capitalize()
 
                     else:
                         result.unsupported_airports.append(from_entities[0]["text"].capitalize())
 
-                # This value will be a TIMEX. And we are only interested in a Date so grab the first result and drop
-                # the Time part. TIMEX is a format that represents DateTime expressions that include some ambiguity.
-                # e.g. missing a Year.
+                # Travel Date and Return Date
+                try:       
+                    date_entities = recognizer_result.entities.get("datetime", [])
+                    print("Date entities :", date_entities, "\n") 
 
+                    if [x['timex'][0] for x in date_entities if x['type']=='date']:
+                        date_entities_list = [x['timex'][0] for x in date_entities if x['type']=='date']
+                        date_entities_formated = [extract_date_from_timex(x) for x in date_entities_list]
+                        print("date_entities_list :", date_entities_list)
 
-                # Start date
-                date_entities = recognizer_result.entities.get("datetime", [])
-                print('===============================str_date_entities=============================================')
-                print(date_entities)
+                        print(len(date_entities_list),"\n")   
 
-                if date_entities[0]:
-                    timex = date_entities[0]["timex"]
+                        if len(date_entities_list) > 1 :
+                            result.travel_date = min(date_entities_formated)
+                            result.return_date = max(date_entities_formated)
+                            print("result.travel_date :", result.travel_date, "\n")   
+                            print("result.return_date :", result.return_date, "\n")   
 
-                if timex:                
-                    datetime = timex[0].split("T")[0]
-                    result.travel_date = datetime
+                        elif len(date_entities_list) == 1 :
+                            result.travel_date = date_entities_formated[0]
+                            print("result.travel_date :", result.travel_date, "\n")  
 
-                else:
+                    else :
+                        result.travel_date = None
+                        result.return_date = None 
+                except Exception as e:
+                    print(e)
                     result.travel_date = None
-
-
-                # End date
-                end_date_entities = recognizer_result.entities.get("datetime", [])
-                print('===============================end_date_entities=============================================')
-                print(end_date_entities)
-
-                if len(end_date_entities)>1 and end_date_entities[1]:
-                    timex = end_date_entities[1]["timex"]
-
-                if timex:                
-                    datetime = timex[0].split("T")[0]
-                    result.return_date = datetime
-
-                else:
-                    result.return_date = None
-
+                    result.return_date = None 
+              
 
                 # Budget
                 budget_entities = recognizer_result.entities.get("$instance", {}).get("budget", [])
-                print('===============================budget_entities=============================================')
-                print(budget_entities)
+
+                print('budget_entities :', budget_entities, "\n")
+                
 
                 if len(budget_entities) > 0:
 
                     if recognizer_result.entities.get("budget", [{"$instance": {}}])[0]:
+                        print("Budget entities :", recognizer_result.entities.get("budget", [{"$instance": {}}])[0], "\n")
                         result.budget = budget_entities[0]["text"].capitalize()
+                elif recognizer_result.entities.get("number", []):
+                    budget_entities = recognizer_result.entities.get("number", [])
+                    print("Budget entities :", budget_entities, "\n")
+                    if max(budget_entities) > 31:
+                        result.budget = max(budget_entities)
+                    else:
+                        result.budget = None
+                else:
+                    result.budget = None
 
 
         except Exception as exception:

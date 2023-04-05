@@ -76,8 +76,6 @@ class MainDialog(ComponentDialog):
         )
 
     async def act_step(self, step_context: WaterfallStepContext) -> DialogTurnResult:
-        print("=================================step_context.options=================================")
-        print(step_context.options)
         if not self._luis_recognizer.is_configured:
             # LUIS is not configured, we just run the BookingDialog path with an empty BookingDetailsInstance.
             return await step_context.begin_dialog(
