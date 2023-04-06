@@ -173,8 +173,7 @@ class BookingDialog(CancelAndHelpDialog):
             booking_details = step_context.options
 
             return await step_context.end_dialog(booking_details)
-        
-        print("Bot Bad Response")
+                
         properties = {}
         properties["origin"] = step_context.options.origin
         properties["destination"] = step_context.options.destination
@@ -185,6 +184,7 @@ class BookingDialog(CancelAndHelpDialog):
         print(properties)
         # self.telemetry_client.track_trace("Warning : User didn't confirm the bot response", properties=properties, severity=2)
         # self.telemetry_client.flush()
+
         self.logger.setLevel(logging.WARNING)
         self.logger.warning("Warning : User didn't confirm the bot response", extra=properties)
 
