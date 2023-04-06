@@ -186,7 +186,7 @@ class BookingDialog(CancelAndHelpDialog):
         # self.telemetry_client.flush()
 
         self.logger.setLevel(logging.ERROR)
-        self.logger.ERROR("ERROR : User didn't confirm the bot response", extra=properties)
+        self.logger.error("ERROR : User didn't confirm the bot response", extra=properties)
 
         return await step_context.end_dialog()
 
