@@ -183,8 +183,10 @@ class BookingDialog(CancelAndHelpDialog):
         properties["budget"] = step_context.options.budget
         properties = {'custom_dimensions': step_context.options.__dict__}
         print(properties)
-        self.telemetry_client.track_trace("Warning : User didn't confirm the bot response", properties=properties, severity=2)
-        self.telemetry_client.flush()
+        # self.telemetry_client.track_trace("Warning : User didn't confirm the bot response", properties=properties, severity=2)
+        # self.telemetry_client.flush()
+        self.logger.setLevel(logging.WARNING)
+        self.logger.warning("Warning : User didn't confirm the bot response", extra=properties)
 
         return await step_context.end_dialog()
 
